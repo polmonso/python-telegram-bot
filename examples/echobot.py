@@ -39,14 +39,32 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+from dotenv import dotenv_values
+
+config = dotenv_values(".env")
+
+TOKEN=config['TOKEN']
+CHAT_ID=config['CHAT_ID']
+
+if not CHAT_ID:
+    logger.error("CHAT_ID is not set")
+
 
 # Define a few command handlers. These usually take the two arguments update and
 # context.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
     user = update.effective_user
+    logger.info(user.full_name)
+
+    if update.effective_user.id not in users_found:
+        users_found.append(update.effective_user.id)
+        await context.bot.send_message(chat_id=CHAT_ID, text=f'{update.effective_user.first_name} encontró una pista de la caza del NFC!')
+    else:
+        logger.info(f'Skipped notification for user {update.effective_user.id}')
+
     await update.message.reply_html(
-        rf"Hi {user.mention_html()}!",
+        rf"EN: Hi {user.mention_html()}! Do you wanna play a game?\nES: HI{user.mention_html()}! Quieres jugar un juego?",
         reply_markup=ForceReply(selective=True),
     )
 
@@ -55,16 +73,22 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Send a message when the command /help is issued."""
     await update.message.reply_text("Help!")
 
+users_found = []
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Echo the user message."""
-    await update.message.reply_text(update.message.text)
+    logger.info(update.message.text)
 
+    msg_en = ''#"Great! Then where do you need to go at 9, 13:30 and 20 today?"
+    msg_es = "Super! Entonces donde tienes que ir a las 9, 13:30 y 20 hoy?"
+
+    reply_msg = f"{msg_en} {msg_es}"
+    await update.message.reply_text(reply_msg)
 
 def main() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token("TOKEN").build()
+    application = Application.builder().token(TOKEN).build()
 
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))

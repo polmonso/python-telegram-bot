@@ -7,3 +7,4 @@
 
 # httpx has no stable release yet, so let's be cautious for now
 httpx ~= 0.23.3
+python-dotenv
